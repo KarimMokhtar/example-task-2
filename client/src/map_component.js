@@ -7,10 +7,13 @@ const getRouteSummary = locations => {
     const from = Moment(locations[locations.length - 1].time).format('hh:mm DD.MM');
     return `${from} - ${to}`;
 };
-
-const MapComponent = () => {
+let marker;
+const MapComponent = props => {
     const map = useRef();
+
     const [locations, setLocations] = useState();
+    const [lookup, setLookup] = useState();
+    const [selectedDate, setSelectedDate] = useState();
     // Request location data.
     useEffect(() => {
         fetch('http://localhost:3000')
@@ -20,6 +23,15 @@ const MapComponent = () => {
             });
     }, []);
     // TODO(Task 2): Request location closest to specified datetime from the back-end.
+    if (selectedDate !== props.selectedDate) {
+        setSelectedDate(props.selectedDate);
+        fetch(`http://localhost:3000/location/${selectedDate}`)
+            .then(response => response.json())
+            .then(json => {
+                setLookup(json.nearest);
+            });
+    }
+    // useEffect(() => {}, []);
 
     // Initialize map.
     useEffect(() => {
@@ -52,6 +64,14 @@ const MapComponent = () => {
         });
     }, [locations, map.current]);
     // TODO(Task 2): Display location that the back-end returned on the map as a marker.
+    useEffect(() => {
+        if (!lookup || !map.current) return;
+        console.log(lookup);
+        if (marker) {
+            marker.remove();
+        }
+        marker = L.marker([lookup.lat, lookup.lon]).addTo(map.current);
+    });
 
     return (
         <div>
